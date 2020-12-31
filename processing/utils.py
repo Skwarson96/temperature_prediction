@@ -1,7 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import ensemble
+
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.naive import NaiveForecaster
+
 
 def rename(df, col_name, sn = None):
     # print("rename")
@@ -50,57 +55,30 @@ def perform_processing(
     df_combined = pd.concat([temperature, target_temperature, valve_level])
     df_combined = df_combined.drop(columns=['serialNumber'])
 
-    # print(df_combined.head(5))
-    # print(df_combined.tail(5))
-    # print(len(df_combined.index))
-    # df_combined.plot()
-
     df_combined = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
-    # df_combined['temp_gt'] = df_combined['temp'].shift(-1)
-    # df_combined['temp_gt'] = df_combined['temp_gt'].fillna(method='ffill')
 
-    print(df_combined.head(5))
-    print(df_combined.tail(5))
-    # print(len(df_combined.index))
 
     to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
-    to_calulate = to_calulate.values
-    print("to calculate:", to_calulate[0])
+    to_calulate = to_calulate.to_period("15T")
+    print("to calculate:", to_calulate)
 
-    # show_plot(df_combined)
+    to_calulate = pd.PeriodIndex(to_calulate)
+    fh = ForecastingHorizon(to_calulate, is_relative=False)
+    print(fh)
 
-    # plt.scatter(df_combined.tail(10).index, X_train[:,0])
+    y_train = df_combined.tail(10)
+    y_train.index = y_train.index.to_period("15T")
+    print(y_train['temp'])
+    forecaster = NaiveForecaster(strategy="last", sp=1)
+    forecaster.fit(y_train['temp'])
+    print("test")
 
-    X_train = df_combined.tail(10)[['temp', 'target', 'valve']].to_numpy()
+    y_pred = forecaster.predict(fh)
 
-    y_train = df_combined.tail(10)[['temp_gt']].to_numpy()
+    print('y_pred', y_pred)
 
-
-    reg_rf = ensemble.RandomForestRegressor(random_state=42)
-    reg_rf.fit(X_train, y_train)
-    y_predicted = reg_rf.predict()
-    print('y_predicted', y_predicted)
-
-
-
-    # print(y_train)
-
-    # print(type(to_calulate))
-    # print(to_calulate[0])
-    # print(type(to_calulate[0]))
-    # y_train =
-    #
-    # print(y_train)
-    # plt.scatter(df_combined.tail(10).index, y_train[:,0])
-    # plt.show()
-    # print(valve_level.head(5))
-    # print(serial_number_for_prediction)
-    # print(X_train)
-    # print(y_train)
-
-    #
 
     # exit()
     print('----------------------------------\n')
-    return y_predicted[0][0]
+    return y_pred
