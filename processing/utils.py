@@ -6,6 +6,17 @@ from sklearn import ensemble
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sklearn.neighbors import KNeighborsRegressor
+from sktime.forecasting.compose import (
+    EnsembleForecaster,
+    ReducedRegressionForecaster,
+    TransformedTargetForecaster,
+)
+
+# from sklearn.linear_model import RidgeClassifierCV
+# from sktime.transformations.panel.rocket import Rocket
+
 
 
 def rename(df, col_name, sn = None):
@@ -67,14 +78,24 @@ def perform_processing(
     fh = ForecastingHorizon(to_calulate, is_relative=False)
     print(fh)
 
-    y_train = df_combined.tail(10)
+    y_train = df_combined#.tail(15)
     y_train.index = y_train.index.to_period("15T")
-    print(y_train['temp'])
-    forecaster = NaiveForecaster(strategy="last", sp=1)
+    # print(y_train['temp'])
+    # forecaster = NaiveForecaster(strategy="mean", sp=1)
+
+
+    regressor = KNeighborsRegressor(n_neighbors=1)
+    forecaster = ReducedRegressionForecaster(
+        regressor=regressor, window_length=1, strategy="recursive"
+    )
+    # print(y_train)
+    # print(y_train[['temp', 'valve']])
+    # print(y_train.loc[:,['temp', 'valve']])
     forecaster.fit(y_train['temp'])
-    print("test")
+    # forecaster.fit(y_train.loc[:,['temp', 'valve', 'target']])
 
     y_pred = forecaster.predict(fh)
+
 
     print('y_pred', y_pred)
 
