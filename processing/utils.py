@@ -21,7 +21,6 @@ from sklearn.linear_model import LinearRegression
 # from sktime.transformations.panel.rocket import Rocket
 
 
-
 def rename(df, col_name, sn = None):
     # print("rename")
     # change col name to more fit
@@ -71,13 +70,40 @@ def perform_processing(
 
     df_combined = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
+    # show_plot(df_combined)
+
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
     # print(df_combined.head(5))
     # print(df_combined.tail(5))
 
-    df_train = df_combined.tail(150)
+    to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
+    # to_calulate = to_calulate.to_period("15T")
+    # print("to calculate:", to_calulate)
+    to_calulate_down = to_calulate - 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
+    to_calulate_up = to_calulate + 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
+    # print("calculate range:", to_calulate_down.values[0], ', ', to_calulate_up.values[0])
+
+    mask = (df_combined.index > str(to_calulate_down.values[0])) & (df_combined.index <= str(to_calulate_up.values[0]))
+
+    # print(mask)
+
+    days = 6
+    mask2 = np.zeros(len(df_combined.index), dtype=bool)
+    # mask2 = mask2.transpose()
+    # print(mask2)
+    for day in range(days):
+        day = day + 1
+        # print(day)
+        to_calulate_down = to_calulate - 10 * pd.DateOffset(minutes=15) - day * pd.DateOffset(days=1)
+        to_calulate_up = to_calulate + 10 * pd.DateOffset(minutes=15) - day * pd.DateOffset(days=1)
+        # print("calculate range:", to_calulate_down.values[0], ', ', to_calulate_up.values[0])
+        mask_pom = (df_combined.index > str(to_calulate_down.values[0])) & (df_combined.index <= str(to_calulate_up.values[0]))
+        mask2 = np.add(mask2, mask_pom)
+
+    # df_train = df_combined.tail(150)
+    df_train = df_combined.loc[mask2]
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
     y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
@@ -87,11 +113,16 @@ def perform_processing(
     reg_rf = ensemble.RandomForestRegressor(random_state=42)
     reg_rf.fit(X_train, y_train)
 
+    # reg = ensemble.AdaBoostRegressor(random_state=0, n_estimators=100)
+    # reg.fit(X_train, y_train)
+
     last_sample = df_combined.tail(1)
     last_sample = last_sample[['temp', 'valve']].to_numpy()
     # print(last_sample)
 
     y_pred = reg_rf.predict(last_sample)
+    # y_pred = reg.predict(last_sample)
+
 
     print('y_pred', y_pred)
 
