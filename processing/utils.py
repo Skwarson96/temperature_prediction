@@ -70,6 +70,8 @@ def perform_processing(
 
     df_combined = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
+
+
     # show_plot(df_combined)
 
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
@@ -78,14 +80,16 @@ def perform_processing(
     # print(df_combined.head(5))
     # print(df_combined.tail(5))
 
+    # delete weekend days (Sat & Sun)
+    df_combined = df_combined[df_combined.index.dayofweek < 5]
+    # show_plot(df_combined)
+
     to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
     # to_calulate = to_calulate.to_period("15T")
     # print("to calculate:", to_calulate)
     to_calulate_down = to_calulate - 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
     to_calulate_up = to_calulate + 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
     # print("calculate range:", to_calulate_down.values[0], ', ', to_calulate_up.values[0])
-
-    mask = (df_combined.index > str(to_calulate_down.values[0])) & (df_combined.index <= str(to_calulate_up.values[0]))
 
     # print(mask)
 
@@ -104,6 +108,7 @@ def perform_processing(
 
     # df_train = df_combined.tail(150)
     df_train = df_combined.loc[mask2]
+    show_plot(df_train)
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
     y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
