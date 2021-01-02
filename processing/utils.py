@@ -14,6 +14,9 @@ from sktime.forecasting.compose import (
     TransformedTargetForecaster,
 )
 
+from sklearn.linear_model import LinearRegression
+
+
 # from sklearn.linear_model import RidgeClassifierCV
 # from sktime.transformations.panel.rocket import Rocket
 
@@ -68,37 +71,31 @@ def perform_processing(
 
     df_combined = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
+    df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
+    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
+    # print(df_combined.head(5))
+    # print(df_combined.tail(5))
 
-    to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
-    to_calulate = to_calulate.to_period("15T")
-    print("to calculate:", to_calulate)
+    df_train = df_combined.tail(150)
+    X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
+    y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
-    to_calulate = pd.PeriodIndex(to_calulate)
-    fh = ForecastingHorizon(to_calulate, is_relative=False)
-    print(fh)
-
-    y_train = df_combined#.tail(15)
-    y_train.index = y_train.index.to_period("15T")
-    # print(y_train['temp'])
-    # forecaster = NaiveForecaster(strategy="mean", sp=1)
-
-
-    regressor = KNeighborsRegressor(n_neighbors=1)
-    forecaster = ReducedRegressionForecaster(
-        regressor=regressor, window_length=1, strategy="recursive"
-    )
+    # print(X_train)
     # print(y_train)
-    # print(y_train[['temp', 'valve']])
-    # print(y_train.loc[:,['temp', 'valve']])
-    forecaster.fit(y_train['temp'])
-    # forecaster.fit(y_train.loc[:,['temp', 'valve', 'target']])
 
-    y_pred = forecaster.predict(fh)
+    reg_rf = ensemble.RandomForestRegressor(random_state=42)
+    reg_rf.fit(X_train, y_train)
 
+    last_sample = df_combined.tail(1)
+    last_sample = last_sample[['temp', 'valve']].to_numpy()
+    # print(last_sample)
+
+    y_pred = reg_rf.predict(last_sample)
 
     print('y_pred', y_pred)
 
+    # TODO resamplink na podstawie ilosci probek
 
     # exit()
     print('----------------------------------\n')
