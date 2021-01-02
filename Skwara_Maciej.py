@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 
+import matplotlib.pyplot as plt
 from processing.utils import perform_processing
-
+from sklearn import metrics
 
 def main():
     parser = argparse.ArgumentParser()
@@ -43,6 +44,12 @@ def main():
         df_temperature_resampled.at[current, 'predicted'] = predicted_temperature
     df_temperature_resampled.to_csv(results_file)
 
+    # print(df_temperature_resampled)
+    print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
+    plt.plot(df_temperature_resampled.index, df_temperature_resampled.value)
+    plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted)
+    plt.legend(['value', 'predicted'])
+    plt.show()
 
 if __name__ == '__main__':
     main()
