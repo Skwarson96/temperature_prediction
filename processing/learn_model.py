@@ -23,6 +23,12 @@ def rename(df, col_name, sn = None):
 
     return df
 
+def learn_model_baseline(X_train, y_train):
+    reg_rf = ensemble.RandomForestRegressor(random_state=42)
+    # reg_rf = svm.SVR()
+    reg_rf.fit(X_train, y_train)
+    pickle.dump(reg_rf, open('./data/clf_baseline.p', 'wb'))
+
 def learn_model(X_train, y_train):
     reg_rf = ensemble.RandomForestRegressor(random_state=42)
     # reg_rf = svm.SVR()
@@ -106,7 +112,7 @@ def preprocess_data(
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
-    df_train = df_combined
+    df_train = df_combined.head(50)
     print(df_train.head(5))
     print(df_train.tail(5))
     print(df_train.describe())

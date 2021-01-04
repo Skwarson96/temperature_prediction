@@ -88,17 +88,20 @@ def perform_processing(
 
 
 
-
+    with Path('data/clf_baseline.p').open('rb') as classifier_file:
+        reg_rf_baseline = pickle.load(classifier_file)
 
     with Path('data/clf.p').open('rb') as classifier_file:
         reg_rf = pickle.load(classifier_file)
 
+
+    y_pred_baseline = reg_rf_baseline.predict(last_sample)
     y_pred = reg_rf.predict(last_sample)
 
 
+    print('y_pred_baseline', y_pred_baseline)
     print('y_pred', y_pred)
-
 
     # exit()
     print('----------------------------------\n')
-    return y_pred
+    return y_pred_baseline, y_pred

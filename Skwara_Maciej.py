@@ -9,7 +9,8 @@ from sklearn import metrics
 from processing.utils import perform_processing
 from processing.learn_model import preprocess_data
 from processing.learn_model import learn_model
-
+from processing.learn_model import preprocess_data_baseline
+from processing.learn_model import learn_model_baseline
 
 def main():
     parser = argparse.ArgumentParser()
@@ -39,6 +40,16 @@ def main():
 
     current = start - pd.DateOffset(minutes=15)
 
+    X_train, y_train = preprocess_data_baseline(
+            df_temperature.loc[(current - pd.DateOffset(days=7)):current],
+            df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
+            df_valve.loc[(current - pd.DateOffset(days=7)):current],
+            arguments['serial_number']
+        )
+
+    learn_model_baseline(X_train, y_train)
+
+
     X_train, y_train = preprocess_data(
             df_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
@@ -52,21 +63,25 @@ def main():
     while current < stop:
         print('current', current)
         print('to calculate:', current + pd.DateOffset(minutes=15))
-        predicted_temperature = perform_processing(
+        predicted_temperature_baseline, predicted_temperature = perform_processing(
             df_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_valve.loc[(current - pd.DateOffset(days=7)):current],
             arguments['serial_number']
         )
         current = current + pd.DateOffset(minutes=15)
+        df_temperature_resampled.at[current, 'predicted_baseline'] = predicted_temperature_baseline
         df_temperature_resampled.at[current, 'predicted'] = predicted_temperature
     df_temperature_resampled.to_csv(results_file)
 
     # print(df_temperature_resampled)
+    print('\nmae baseline: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_baseline))
     print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
+    
     plt.plot(df_temperature_resampled.index, df_temperature_resampled.value)
+    plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_baseline)
     plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted)
-    plt.legend(['value', 'predicted'])
+    plt.legend(['value', 'baseline' ,'predicted'])
     plt.show()
 
 if __name__ == '__main__':
