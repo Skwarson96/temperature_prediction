@@ -1,12 +1,15 @@
 import argparse
 import json
 from pathlib import Path
-
 import pandas as pd
-
 import matplotlib.pyplot as plt
-from processing.utils import perform_processing
 from sklearn import metrics
+
+
+from processing.utils import perform_processing
+from processing.learn_model import preprocess_data
+from processing.learn_model import learn_model
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -32,6 +35,17 @@ def main():
     df_temperature_resampled['predicted'] = 0.0
 
     current = start - pd.DateOffset(minutes=15)
+
+    X_train, y_train = preprocess_data(
+            df_temperature.loc[(current - pd.DateOffset(days=7)):current],
+            df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
+            df_valve.loc[(current - pd.DateOffset(days=7)):current],
+            arguments['serial_number']
+        )
+
+    learn_model(X_train, y_train)
+
+    # exit()
     while current < stop:
         print('current', current)
         predicted_temperature = perform_processing(
