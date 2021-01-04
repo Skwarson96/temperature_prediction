@@ -68,9 +68,9 @@ def perform_processing(
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
-    print(df_combined.head(5))
-    print(df_combined.tail(5))
-    print(df_combined.describe())
+    # print(df_combined.head(5))
+    # print(df_combined.tail(5))
+    # print(df_combined.describe())
     # # delete weekend days (Sat & Sun)
     # # df_combined = df_combined[df_combined.index.dayofweek < 5]
     # # show_plot(df_combined)
@@ -81,21 +81,22 @@ def perform_processing(
 
 
 
-
-    last_sample = df_combined.tail(1)
-    last_sample = last_sample[['temp', 'valve']].to_numpy()
-    print(last_sample)
-
-
-
     with Path('data/clf_baseline.p').open('rb') as classifier_file:
         reg_rf_baseline = pickle.load(classifier_file)
+
 
     with Path('data/clf.p').open('rb') as classifier_file:
         reg_rf = pickle.load(classifier_file)
 
 
+    last_sample = df_combined.tail(1)
+    last_sample = last_sample[['temp', 'valve']].to_numpy()
+    print(last_sample)
+
     y_pred_baseline = reg_rf_baseline.predict(last_sample)
+
+    last_sample = df_combined.tail(1)
+    last_sample = last_sample[['temp', 'valve']].to_numpy()
     y_pred = reg_rf.predict(last_sample)
 
 

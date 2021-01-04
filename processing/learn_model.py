@@ -85,9 +85,9 @@ def preprocess_data_baseline(
     # df_train = df_combined.loc[mask2]
 
     df_train = df_combined
-    print(df_train.head(5))
-    print(df_train.tail(5))
-    print(df_train.describe())
+    # print(df_train.head(5))
+    # print(df_train.tail(5))
+    # print(df_train.describe())
     # print(df_train.head(21))
     # show_plot(df_train)
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
@@ -108,14 +108,26 @@ def preprocess_data(
     df_combined = df_combined.drop(columns=['serialNumber'])
 
     df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
+    # df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
 
-    df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
-    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
+    df_combined['temp_gt'] = (df_combined['temp'].shift(-1, fill_value=20) + \
+                             df_combined['temp'].shift(-2, fill_value=20) + \
+                             df_combined['temp'].shift(-3, fill_value=20) + \
+                             df_combined['temp'].shift(-4, fill_value=20))/4
 
-    df_train = df_combined.head(50)
-    print(df_train.head(5))
-    print(df_train.tail(5))
-    print(df_train.describe())
+    df_combined['valve/target'] =df_combined['valve'] / df_combined['target']
+
+    # df_combined['temp_gt'] = df_combined['valve/target'] + df_combined['temp_gt']
+    print(df_combined.head(5))
+    print(df_combined.tail(5))
+    print(df_combined.describe())
+    # df_train = df_combined.head(50)
+    df_train = df_combined
+    # exit()
+    # print(df_train.head(5))
+    # print(df_train.tail(5))
+    # print(df_train.describe())
+
     # print(df_train.head(21))
     # show_plot(df_train)
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
@@ -127,10 +139,7 @@ def preprocess_data(
 
 '''
 Zmiany:
-- dodane , label='right' do resample, dzieki temu dodany jest ostatni element, nie znkia tak jak poprzednio
-- powrot do df_train = df_combined
-
-
+-
 
 '''
 

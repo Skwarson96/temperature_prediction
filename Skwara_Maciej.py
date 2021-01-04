@@ -77,7 +77,7 @@ def main():
     # print(df_temperature_resampled)
     print('\nmae baseline: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_baseline))
     print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
-    
+
     plt.plot(df_temperature_resampled.index, df_temperature_resampled.value)
     plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_baseline)
     plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted)
