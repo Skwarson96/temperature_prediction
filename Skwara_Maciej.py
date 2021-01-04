@@ -34,6 +34,9 @@ def main():
     df_temperature_resampled = df_temperature_resampled.loc[start:stop]
     df_temperature_resampled['predicted'] = 0.0
 
+    # print(df_temperature_resampled.head(5))
+    # print(df_temperature_resampled.tail(5))
+
     current = start - pd.DateOffset(minutes=15)
 
     X_train, y_train = preprocess_data(
@@ -48,6 +51,7 @@ def main():
     # exit()
     while current < stop:
         print('current', current)
+        print('to calculate:', current + pd.DateOffset(minutes=15))
         predicted_temperature = perform_processing(
             df_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],

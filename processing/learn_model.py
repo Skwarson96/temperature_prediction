@@ -5,8 +5,8 @@ import pickle
 
 
 from sklearn import ensemble
-
-
+from sklearn import linear_model
+from sklearn import svm
 
 
 def rename(df, col_name, sn = None):
@@ -25,10 +25,11 @@ def rename(df, col_name, sn = None):
 
 def learn_model(X_train, y_train):
     reg_rf = ensemble.RandomForestRegressor(random_state=42)
+    # reg_rf = svm.SVR()
     reg_rf.fit(X_train, y_train)
     pickle.dump(reg_rf, open('./data/clf.p', 'wb'))
 
-def preprocess_data(
+def preprocess_data_baseline(
         temperature: pd.DataFrame,
         target_temperature: pd.DataFrame,
         valve_level: pd.DataFrame,
@@ -40,14 +41,8 @@ def preprocess_data(
     df_combined = pd.concat([temperature, target_temperature, valve_level])
     df_combined = df_combined.drop(columns=['serialNumber'])
 
-    print(df_combined.head(5))
-    print(df_combined.tail(5))
+    df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
 
-    df_combined = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
-
-    print('tail', df_combined.tail(1))
-
-    # show_plot(df_combined)
 
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
@@ -57,11 +52,8 @@ def preprocess_data(
     # show_plot(df_combined)
 
     to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
-    # to_calulate = to_calulate.to_period("15T")
-    print("to calculate:", to_calulate)
+    # print("to calculate:", to_calulate)
 
-    print(df_combined.head(5))
-    print(df_combined.tail(5))
 
     to_calulate_down = to_calulate - 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
     to_calulate_up = to_calulate + 10 * pd.DateOffset(minutes=15) - pd.DateOffset(days=1)
@@ -83,8 +75,41 @@ def preprocess_data(
                     df_combined.index <= str(to_calulate_up.values[0]))
         mask2 = np.add(mask2, mask_pom)
 
-    # df_train = df_combined.tail(150)
-    df_train = df_combined.loc[mask2]
+
+    # df_train = df_combined.loc[mask2]
+
+    df_train = df_combined
+    print(df_train.head(5))
+    print(df_train.tail(5))
+    print(df_train.describe())
+    # print(df_train.head(21))
+    # show_plot(df_train)
+    X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
+    y_train = df_train['temp_gt'].to_numpy()[1:-1]
+
+    return X_train, y_train
+
+def preprocess_data(
+        temperature: pd.DataFrame,
+        target_temperature: pd.DataFrame,
+        valve_level: pd.DataFrame,
+        serial_number_for_prediction: str) -> float:
+
+    temperature = rename(temperature, 'temp', serial_number_for_prediction)
+    target_temperature = rename(target_temperature, 'target')
+    valve_level = rename(valve_level, 'valve')
+    df_combined = pd.concat([temperature, target_temperature, valve_level])
+    df_combined = df_combined.drop(columns=['serialNumber'])
+
+    df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
+
+    df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
+    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
+
+    df_train = df_combined
+    print(df_train.head(5))
+    print(df_train.tail(5))
+    print(df_train.describe())
     # print(df_train.head(21))
     # show_plot(df_train)
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
@@ -94,7 +119,14 @@ def preprocess_data(
 
 
 
+'''
+Zmiany:
+- dodane , label='right' do resample, dzieki temu dodany jest ostatni element, nie znkia tak jak poprzednio
+- powrot do df_train = df_combined
 
+
+
+'''
 
 
 
