@@ -8,6 +8,23 @@ from sklearn import ensemble
 from sklearn import linear_model
 from sklearn import svm
 
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sklearn.neighbors import KNeighborsRegressor
+from sktime.forecasting.compose import (
+    EnsembleForecaster,
+    ReducedRegressionForecaster,
+    TransformedTargetForecaster,
+)
+
+from sklearn.linear_model import LinearRegression
+
+
+# from sklearn.linear_model import RidgeClassifierCV
+# from sktime.transformations.panel.rocket import Rocket
+
+
 
 def rename(df, col_name, sn = None):
     # print("rename")
@@ -138,12 +155,7 @@ def preprocess_data():
     return X_train, y_train
 
 
-# preprocess_data()
-'''
-Zmiany:
--
 
-'''
 
 
 
