@@ -52,6 +52,11 @@ def learn_model(X_train, y_train):
     reg_rf.fit(X_train, y_train)
     pickle.dump(reg_rf, open('./data/clf.p', 'wb'))
 
+def learn_model_valve(X_train, y_train):
+    reg_rf = ensemble.RandomForestRegressor(random_state=42)
+    reg_rf.fit(X_train, y_train)
+    pickle.dump(reg_rf, open('./data/valve_reg.p', 'wb'))
+
 def preprocess_data_baseline(
         temperature: pd.DataFrame,
         target_temperature: pd.DataFrame,
@@ -102,12 +107,15 @@ def preprocess_data_baseline(
     # df_train = df_combined.loc[mask2]
 
     df_train = df_combined
+    print(df_train)
     # print(df_train.head(5))
     # print(df_train.tail(5))
     # print(df_train.describe())
     # print(df_train.head(21))
     # show_plot(df_train)
-    X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
+    X_train = df_train[['temp', 'target', 'valve']].to_numpy()[1:-1]
+    print('X_train')
+    print(X_train)
     y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
     return X_train, y_train
@@ -145,14 +153,18 @@ def preprocess_data():
     # df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
 
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
-
+    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
     df_train = df_combined
 
     X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
     y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
-    return X_train, y_train
+    X_train_valve = df_train[['temp', 'valve']].to_numpy()[1:-1]
+    y_train_valve = df_train['valve_gt'].to_numpy()[1:-1]
+
+    return X_train, y_train, X_train_valve, y_train_valve
+
 
 
 

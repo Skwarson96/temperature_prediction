@@ -81,51 +81,56 @@ def perform_processing(
     with Path('data/clf.p').open('rb') as classifier_file:
         reg_rf = pickle.load(classifier_file)
 
+    with Path('data/valve_reg.p').open('rb') as classifier_file:
+        reg_rf_valve_baseline = pickle.load(classifier_file)
 
     last_sample = df_combined.tail(1)
-    last_sample = last_sample[['temp', 'valve']].to_numpy()
+    last_sample = last_sample[['temp', 'target', 'valve']].to_numpy()
     print(last_sample)
-
     y_pred_baseline = reg_rf_baseline.predict(last_sample)
 
     last_sample = df_combined.tail(1)
     last_sample = last_sample[['temp', 'valve']].to_numpy()
-    y_pred = reg_rf.predict(last_sample)
+    y_pred_prev_learn = reg_rf.predict(last_sample)
+
+    last_sample = df_combined.tail(1)
+    last_sample = last_sample[['temp', 'valve']].to_numpy()
+    y_pred_valve_baseline  = reg_rf_valve_baseline.predict(last_sample)
 
     #------------------------------------
 
-    to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
-    to_calulate = to_calulate.to_period("15T")
-    print("to calculate:", to_calulate)
+    # to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
+    # to_calulate = to_calulate.to_period("15T")
+    # print("to calculate:", to_calulate)
 
-    to_calulate = pd.PeriodIndex(to_calulate)
-    fh = ForecastingHorizon(to_calulate, is_relative=False)
-    print(fh)
+    # to_calulate = pd.PeriodIndex(to_calulate)
+    # fh = ForecastingHorizon(to_calulate, is_relative=False)
+    # print(fh)
 
-    y_train = df_combined#.tail(15)
-    y_train.index = y_train.index.to_period("15T")
+    # y_train = df_combined#.tail(15)
+    # y_train.index = y_train.index.to_period("15T")
     # print(y_train['temp'])
     # forecaster = NaiveForecaster(strategy="mean", sp=1)
 
 
-    regressor = KNeighborsRegressor(n_neighbors=1)
-    forecaster = ReducedRegressionForecaster(
-        regressor=regressor, window_length=1, strategy="recursive"
-    )
+    # regressor = KNeighborsRegressor(n_neighbors=1)
+    # forecaster = ReducedRegressionForecaster(
+    #     regressor=regressor, window_length=1, strategy="recursive"
+    # )
     # print(y_train)
     # print(y_train[['temp', 'valve']])
     # print(y_train.loc[:,['temp', 'valve']])
-    forecaster.fit(y_train['temp'])
+    # forecaster.fit(y_train['temp'])
     # forecaster.fit(y_train.loc[:,['temp', 'valve', 'target']])
 
-    y_pred_ = forecaster.predict(fh)
-    y_pred_ = y_pred_.values
+    # y_pred_ = forecaster.predict(fh)
+    # y_pred_ = y_pred_.values
 
     print('y_pred_baseline', y_pred_baseline)
-    print('y_pred', y_pred)
-    print('y_pred_', y_pred_)
+    print('y_pred', y_pred_prev_learn)
+    print('y_pred_valve_baseline', y_pred_valve_baseline)
 
 
     # exit()
     print('----------------------------------\n')
-    return y_pred_baseline, 78.00
+    return y_pred_baseline, y_pred_prev_learn, y_pred_valve_baseline
