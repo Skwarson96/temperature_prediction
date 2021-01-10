@@ -38,11 +38,9 @@ def main():
 
     df_combined_resampled = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
-
     df_combined_resampled = df_combined_resampled.loc[start:stop]
     df_combined_resampled['predicted_temperature'] = 0.0
     df_combined_resampled['predicted_valve_level'] = 0.0
-
 
     current = start - pd.DateOffset(minutes=15)
 
@@ -72,23 +70,23 @@ def main():
 
     df_combined_resampled.to_csv(results_file)
 
-    print('\ntemp mae baseline: ',metrics.mean_absolute_error(df_combined_resampled.temperature, df_combined_resampled.predicted_temperature))
-
-    plt.figure()
-    plt.plot(df_combined_resampled.index, df_combined_resampled.temperature)
-    plt.plot(df_combined_resampled.index, df_combined_resampled.predicted_temperature)
-
-    plt.legend(['value', 'baseline', 'prev learn'])
-
-    plt.figure()
-    print('\nvalve mae baseline: ', metrics.mean_absolute_error(df_combined_resampled.valve_level,
-                                                                  df_combined_resampled.predicted_valve_level))
-
-    plt.plot(df_combined_resampled.index, df_combined_resampled.valve_level)
-    plt.plot(df_combined_resampled.index, df_combined_resampled.predicted_valve_level)
-
-    plt.legend(['value', 'baseline', 'prev learn'])
-    plt.show()
+    # print('\ntemp mae baseline: ',metrics.mean_absolute_error(df_combined_resampled.temperature, df_combined_resampled.predicted_temperature))
+    #
+    # plt.figure()
+    # plt.plot(df_combined_resampled.index, df_combined_resampled.temperature)
+    # plt.plot(df_combined_resampled.index, df_combined_resampled.predicted_temperature)
+    #
+    # plt.legend(['value', 'baseline', 'prev learn'])
+    #
+    # plt.figure()
+    # print('\nvalve mae baseline: ', metrics.mean_absolute_error(df_combined_resampled.valve_level,
+    #                                                               df_combined_resampled.predicted_valve_level))
+    #
+    # plt.plot(df_combined_resampled.index, df_combined_resampled.valve_level)
+    # plt.plot(df_combined_resampled.index, df_combined_resampled.predicted_valve_level)
+    #
+    # plt.legend(['value', 'baseline', 'prev learn'])
+    # plt.show()
 
 
 if __name__ == '__main__':
