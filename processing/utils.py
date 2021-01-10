@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 from pathlib import Path
 
-
+from typing import Tuple
 from sklearn import ensemble
 
 
@@ -51,7 +51,7 @@ def perform_processing(
         temperature: pd.DataFrame,
         target_temperature: pd.DataFrame,
         valve_level: pd.DataFrame,
-        serial_number_for_prediction: str) -> float:
+        serial_number_for_prediction: str) -> Tuple[float, float]:
 
     temperature = rename(temperature, 'temp', serial_number_for_prediction)
     target_temperature = rename(target_temperature, 'target')
@@ -68,13 +68,6 @@ def perform_processing(
     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
-    # print(df_combined.head(5))
-    # print(df_combined.tail(5))
-    # print(df_combined.describe())
-    # # delete weekend days (Sat & Sun)
-    # # df_combined = df_combined[df_combined.index.dayofweek < 5]
-    # # show_plot(df_combined)
-    #
     to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
     # # to_calulate = to_calulate.to_period("15T")
     print("to calculate:", to_calulate)
@@ -99,10 +92,40 @@ def perform_processing(
     last_sample = last_sample[['temp', 'valve']].to_numpy()
     y_pred = reg_rf.predict(last_sample)
 
+    #------------------------------------
+
+    to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
+    to_calulate = to_calulate.to_period("15T")
+    print("to calculate:", to_calulate)
+
+    to_calulate = pd.PeriodIndex(to_calulate)
+    fh = ForecastingHorizon(to_calulate, is_relative=False)
+    print(fh)
+
+    y_train = df_combined#.tail(15)
+    y_train.index = y_train.index.to_period("15T")
+    # print(y_train['temp'])
+    # forecaster = NaiveForecaster(strategy="mean", sp=1)
+
+
+    regressor = KNeighborsRegressor(n_neighbors=1)
+    forecaster = ReducedRegressionForecaster(
+        regressor=regressor, window_length=1, strategy="recursive"
+    )
+    # print(y_train)
+    # print(y_train[['temp', 'valve']])
+    # print(y_train.loc[:,['temp', 'valve']])
+    forecaster.fit(y_train['temp'])
+    # forecaster.fit(y_train.loc[:,['temp', 'valve', 'target']])
+
+    y_pred_ = forecaster.predict(fh)
+    y_pred_ = y_pred_.values
 
     print('y_pred_baseline', y_pred_baseline)
     print('y_pred', y_pred)
+    print('y_pred_', y_pred_)
+
 
     # exit()
     print('----------------------------------\n')
-    return y_pred_baseline, y_pred
+    return y_pred_baseline, 78.00

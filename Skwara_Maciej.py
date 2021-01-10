@@ -30,18 +30,25 @@ def main():
     stop = pd.Timestamp(arguments['stop']).tz_localize('UTC')
 
     df_temperature = pd.read_csv(arguments['file_temperature'], index_col=0, parse_dates=True)
+    df_temperature = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
     df_target_temperature = pd.read_csv(arguments['file_target_temperature'], index_col=0, parse_dates=True)
     df_valve = pd.read_csv(arguments['file_valve_level'], index_col=0, parse_dates=True)
 
     # print(df_temperature)
 
-    df_temperature = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
+    # df_temperature = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
+    df_combined = pd.concat([
+        df_temperature.rename(columns={'value': 'temperature'}),
+        df_target_temperature.rename(columns={'value': 'target_temperature'}),
+        df_valve.rename(columns={'value': 'valve_level'})
+    ])
 
-    df_temperature_resampled = df_temperature.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
+    df_combined_resampled = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
 
 
-    df_temperature_resampled = df_temperature_resampled.loc[start:stop]
-    df_temperature_resampled['predicted'] = 0.0
+    df_combined_resampled = df_combined_resampled.loc[start:stop]
+    df_combined_resampled['predicted_temperature'] = 0.0
+    df_combined_resampled['predicted_valve_level'] = 0.0
 
     # print(df_temperature_resampled.head(5))
     # print(df_temperature_resampled.tail(5))
@@ -66,31 +73,34 @@ def main():
     while current < stop:
         print('current', current)
         print('to calculate:', current + pd.DateOffset(minutes=15))
-        predicted_temperature_, predicted_temperature_baseline, predicted_temperature = perform_processing(
+        predicted_temperature_baseline, predicted_valve_level = perform_processing(
             df_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_valve.loc[(current - pd.DateOffset(days=7)):current],
             arguments['serial_number']
         )
         current = current + pd.DateOffset(minutes=15)
-        df_temperature_resampled.at[current, 'predicted_baseline'] = predicted_temperature_baseline
-        df_temperature_resampled.at[current, 'predicted'] = predicted_temperature
-        df_temperature_resampled.at[current, 'predicted_'] = predicted_temperature_
+        # df_temperature_resampled.at[current, 'predicted_baseline'] = predicted_temperature_baseline
+        # df_temperature_resampled.at[current, 'predicted'] = predicted_temperature
+        # df_temperature_resampled.at[current, 'predicted_'] = predicted_temperature_
 
-    df_temperature_resampled.to_csv(results_file)
+        df_combined_resampled.at[current, 'predicted_temperature'] = predicted_temperature_baseline
+        df_combined_resampled.at[current, 'predicted_valve_level'] = predicted_valve_level
 
+    # df_temperature_resampled.to_csv(results_file)
+    df_combined_resampled.to_csv(results_file)
     # print(df_temperature_resampled)
-    print('\nmae baseline: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_baseline))
-    print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
-    print('\nmae predicted_: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_))
+    # print('\nmae baseline: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_baseline))
+    # print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
+    # print('\nmae predicted_: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_))
 
-    plt.plot(df_temperature_resampled.index, df_temperature_resampled.value)
-    plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_baseline)
-    plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted)
-    plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_)
+    # plt.plot(df_temperature_resampled.index, df_temperature_resampled.value)
+    # plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_baseline)
+    # plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted)
+    # plt.plot(df_temperature_resampled.index, df_temperature_resampled.predicted_)
 
-    plt.legend(['value', 'baseline' ,'predicted', 'predicted_'])
-    plt.show()
+    # plt.legend(['value', 'baseline' ,'predicted', 'predicted_'])
+    # plt.show()
 
 if __name__ == '__main__':
     main()
