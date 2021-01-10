@@ -125,7 +125,7 @@ def preprocess_data_baseline(
     y_train_valve = df_train['valve_gt'].to_numpy()[1:-1]
 
     return X_train, y_train, X_train_valve, y_train_valve
-
+#
 # def preprocess_data():
 #
 #     # temperature = pd.read_csv('.././WZUM_project_2020.12.20/office_1_temperature_supply_points_data_2020-10-13_2020-11-02.csv', index_col=0, parse_dates=True)
@@ -171,7 +171,7 @@ def preprocess_data_baseline(
 #     y_train_valve = df_train['valve_gt'].to_numpy()[1:-1]
 #
 #     return X_train, y_train, X_train_valve, y_train_valve
-
+#
 
 
 
