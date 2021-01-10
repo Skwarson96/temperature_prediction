@@ -30,7 +30,7 @@ def main():
     stop = pd.Timestamp(arguments['stop']).tz_localize('UTC')
 
     df_temperature = pd.read_csv(arguments['file_temperature'], index_col=0, parse_dates=True)
-    df_temperature = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
+    df_temperature_serial_number = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
     df_target_temperature = pd.read_csv(arguments['file_target_temperature'], index_col=0, parse_dates=True)
     df_valve = pd.read_csv(arguments['file_valve_level'], index_col=0, parse_dates=True)
 
@@ -38,7 +38,7 @@ def main():
 
     # df_temperature = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
     df_combined = pd.concat([
-        df_temperature.rename(columns={'value': 'temperature'}),
+        df_temperature_serial_number.rename(columns={'value': 'temperature'}),
         df_target_temperature.rename(columns={'value': 'target_temperature'}),
         df_valve.rename(columns={'value': 'valve_level'})
     ])
@@ -90,7 +90,8 @@ def main():
     # df_temperature_resampled.to_csv(results_file)
     df_combined_resampled.to_csv(results_file)
     # print(df_temperature_resampled)
-    # print('\nmae baseline: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_baseline))
+    print('\ntemp mae baseline: ',metrics.mean_absolute_error(df_combined_resampled.temperature, df_combined_resampled.predicted_temperature))
+    print('\nvalve mae baseline: ',metrics.mean_absolute_error(df_combined_resampled.valve_level, df_combined_resampled.predicted_valve_level))
     # print('\nmae: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted))
     # print('\nmae predicted_: ',metrics.mean_absolute_error(df_temperature_resampled.value, df_temperature_resampled.predicted_))
 
