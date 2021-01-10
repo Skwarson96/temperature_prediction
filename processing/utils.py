@@ -65,37 +65,43 @@ def perform_processing(
 
     # show_plot(df_combined)
 
-    df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
-    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
+    # df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
+    # df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
 
-    to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
+    # to_calulate = df_combined.tail(1).index + pd.DateOffset(minutes=15)
     # # to_calulate = to_calulate.to_period("15T")
-    print("to calculate:", to_calulate)
+    # print("to calculate:", to_calulate)
 
 
 
-    with Path('data/clf_baseline.p').open('rb') as classifier_file:
-        reg_rf_baseline = pickle.load(classifier_file)
+    with Path('data/reg_temp_baseline.p').open('rb') as classifier_file:
+        reg_rf_temp_baseline = pickle.load(classifier_file)
 
-
-    with Path('data/clf.p').open('rb') as classifier_file:
-        reg_rf = pickle.load(classifier_file)
-
-    with Path('data/valve_reg.p').open('rb') as classifier_file:
+    with Path('data/reg_valve_baseline.p').open('rb') as classifier_file:
         reg_rf_valve_baseline = pickle.load(classifier_file)
+
+    # with Path('data/clf.p').open('rb') as classifier_file:
+    #     reg_rf = pickle.load(classifier_file)
+    #
+    # with Path('data/valve_reg.p').open('rb') as classifier_file:
+    #     reg_rf_valve_prev_learn = pickle.load(classifier_file)
 
     last_sample = df_combined.tail(1)
     last_sample = last_sample[['temp', 'target', 'valve']].to_numpy()
-    print(last_sample)
-    y_pred_baseline = reg_rf_baseline.predict(last_sample)
+    # print(last_sample)
+    y_pred_temp_baseline = reg_rf_temp_baseline.predict(last_sample)
+
+    # last_sample = df_combined.tail(1)
+    # last_sample = last_sample[['temp','valve']].to_numpy()
+    # y_pred_prev_learn = reg_rf.predict(last_sample)
 
     last_sample = df_combined.tail(1)
-    last_sample = last_sample[['temp', 'valve']].to_numpy()
-    y_pred_prev_learn = reg_rf.predict(last_sample)
+    last_sample = last_sample[['temp', 'target',  'valve']].to_numpy()
+    y_pred_valve_baseline = reg_rf_valve_baseline.predict(last_sample)
 
-    last_sample = df_combined.tail(1)
-    last_sample = last_sample[['temp', 'valve']].to_numpy()
-    y_pred_valve_baseline  = reg_rf_valve_baseline.predict(last_sample)
+    # last_sample = df_combined.tail(1)
+    # last_sample = last_sample[['temp', 'valve']].to_numpy()
+    # y_pred_valve_prev_learn  = reg_rf_valve_prev_learn.predict(last_sample)
 
     #------------------------------------
 
@@ -126,11 +132,11 @@ def perform_processing(
     # y_pred_ = forecaster.predict(fh)
     # y_pred_ = y_pred_.values
 
-    print('y_pred_baseline', y_pred_baseline)
-    print('y_pred', y_pred_prev_learn)
-    print('y_pred_valve_baseline', y_pred_valve_baseline)
+    # print('y_pred_temp_baseline', y_pred_temp_baseline)
+    # print('y_pred', y_pred_prev_learn)
+    # print('y_pred_valve_baseline', y_pred_valve_baseline)
 
 
     # exit()
-    print('----------------------------------\n')
-    return y_pred_baseline, y_pred_prev_learn, y_pred_valve_baseline
+    # print('----------------------------------\n')
+    return y_pred_temp_baseline, y_pred_valve_baseline

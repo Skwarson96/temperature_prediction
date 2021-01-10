@@ -40,22 +40,27 @@ def rename(df, col_name, sn = None):
     #
     return df
 
-def learn_model_baseline(X_train, y_train):
+def learn_model_temp_baseline(X_train, y_train):
+    reg_rf = ensemble.RandomForestRegressor(random_state=42)
+    reg_rf.fit(X_train, y_train)
+    pickle.dump(reg_rf, open('./data/reg_temp_baseline.p', 'wb'))
+
+def learn_model_valve_baseline(X_train, y_train):
     reg_rf = ensemble.RandomForestRegressor(random_state=42)
     # reg_rf = svm.SVR()
     reg_rf.fit(X_train, y_train)
-    pickle.dump(reg_rf, open('./data/clf_baseline.p', 'wb'))
+    pickle.dump(reg_rf, open('./data/reg_valve_baseline.p', 'wb'))
 
-def learn_model(X_train, y_train):
-    reg_rf = ensemble.RandomForestRegressor(random_state=42)
-    # reg_rf = svm.SVR()
-    reg_rf.fit(X_train, y_train)
-    pickle.dump(reg_rf, open('./data/clf.p', 'wb'))
-
-def learn_model_valve(X_train, y_train):
-    reg_rf = ensemble.RandomForestRegressor(random_state=42)
-    reg_rf.fit(X_train, y_train)
-    pickle.dump(reg_rf, open('./data/valve_reg.p', 'wb'))
+# def learn_model(X_train, y_train):
+#     reg_rf = ensemble.RandomForestRegressor(random_state=42)
+#     # reg_rf = svm.SVR()
+#     reg_rf.fit(X_train, y_train)
+#     pickle.dump(reg_rf, open('./data/clf.p', 'wb'))
+#
+# def learn_model_valve(X_train, y_train):
+#     reg_rf = ensemble.RandomForestRegressor(random_state=42)
+#     reg_rf.fit(X_train, y_train)
+#     pickle.dump(reg_rf, open('./data/valve_reg.p', 'wb'))
 
 def preprocess_data_baseline(
         temperature: pd.DataFrame,
@@ -114,56 +119,58 @@ def preprocess_data_baseline(
     # print(df_train.head(21))
     # show_plot(df_train)
     X_train = df_train[['temp', 'target', 'valve']].to_numpy()[1:-1]
-    print('X_train')
-    print(X_train)
     y_train = df_train['temp_gt'].to_numpy()[1:-1]
 
-    return X_train, y_train
-
-def preprocess_data():
-
-    # temperature = pd.read_csv('.././WZUM_project_2020.12.20/office_1_temperature_supply_points_data_2020-10-13_2020-11-02.csv', index_col=0, parse_dates=True)
-    # target_temperature = pd.read_csv('.././WZUM_project_2020.12.20/office_1_targetTemperature_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0, parse_dates=True)
-    # valve_level = pd.read_csv('.././WZUM_project_2020.12.20/office_1_valveLevel_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0, parse_dates=True)
-
-    temperature = pd.read_csv(
-        'WZUM_project_2020.12.20/office_1_temperature_supply_points_data_2020-10-13_2020-11-02.csv', index_col=0,
-        parse_dates=True)
-    target_temperature = pd.read_csv(
-        'WZUM_project_2020.12.20/office_1_targetTemperature_supply_points_data_2020-10-13_2020-11-01.csv',
-        index_col=0, parse_dates=True)
-    valve_level = pd.read_csv(
-        'WZUM_project_2020.12.20/office_1_valveLevel_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0,
-        parse_dates=True)
-
-
-    temperature = rename(temperature, 'temp', '0015BC0035001299')
-    target_temperature = rename(target_temperature, 'target')
-    valve_level = rename(valve_level, 'valve')
-
-    df_combined = pd.concat([temperature, target_temperature, valve_level])
-    df_combined = df_combined.drop(columns=['serialNumber'])
-
-    df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
-    print(df_combined)
-    df_combined.drop(df_combined.tail(384).index, inplace=True)
-    print(df_combined)
-
-
-    # df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
-
-    df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
-    df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
-
-    df_train = df_combined
-
-    X_train = df_train[['temp', 'valve']].to_numpy()[1:-1]
-    y_train = df_train['temp_gt'].to_numpy()[1:-1]
-
-    X_train_valve = df_train[['temp', 'valve']].to_numpy()[1:-1]
+    X_train_valve = df_train[['temp', 'target', 'valve']].to_numpy()[1:-1]
     y_train_valve = df_train['valve_gt'].to_numpy()[1:-1]
 
     return X_train, y_train, X_train_valve, y_train_valve
+
+# def preprocess_data():
+#
+#     # temperature = pd.read_csv('.././WZUM_project_2020.12.20/office_1_temperature_supply_points_data_2020-10-13_2020-11-02.csv', index_col=0, parse_dates=True)
+#     # target_temperature = pd.read_csv('.././WZUM_project_2020.12.20/office_1_targetTemperature_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0, parse_dates=True)
+#     # valve_level = pd.read_csv('.././WZUM_project_2020.12.20/office_1_valveLevel_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0, parse_dates=True)
+#
+#     temperature = pd.read_csv(
+#         'WZUM_project_2020.12.20/office_1_temperature_supply_points_data_2020-10-13_2020-11-02.csv', index_col=0,
+#         parse_dates=True)
+#     target_temperature = pd.read_csv(
+#         'WZUM_project_2020.12.20/office_1_targetTemperature_supply_points_data_2020-10-13_2020-11-01.csv',
+#         index_col=0, parse_dates=True)
+#     valve_level = pd.read_csv(
+#         'WZUM_project_2020.12.20/office_1_valveLevel_supply_points_data_2020-10-13_2020-11-01.csv', index_col=0,
+#         parse_dates=True)
+#
+#
+#     temperature = rename(temperature, 'temp', '0015BC0035001299')
+#     target_temperature = rename(target_temperature, 'target')
+#     valve_level = rename(valve_level, 'valve')
+#
+#     df_combined = pd.concat([temperature, target_temperature, valve_level])
+#     df_combined = df_combined.drop(columns=['serialNumber'])
+#
+#     df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
+#     # print(df_combined)
+#     df_combined.drop(df_combined.tail(500).index, inplace=True)
+#     print("last date")
+#     print(df_combined.tail(5))
+#
+#
+#     # df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
+#
+#     df_combined['temp_gt'] = df_combined['temp'].shift(-1, fill_value=20)
+#     df_combined['valve_gt'] = df_combined['valve'].shift(-1, fill_value=20)
+#
+#     df_train = df_combined
+#
+#     X_train = df_train[['temp','valve']].to_numpy()[1:-1]
+#     y_train = df_train['temp_gt'].to_numpy()[1:-1]
+#
+#     X_train_valve = df_train[['temp','valve']].to_numpy()[1:-1]
+#     y_train_valve = df_train['valve_gt'].to_numpy()[1:-1]
+#
+#     return X_train, y_train, X_train_valve, y_train_valve
 
 
 
