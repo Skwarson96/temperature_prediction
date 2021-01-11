@@ -26,18 +26,16 @@ def main():
     stop = pd.Timestamp(arguments['stop']).tz_localize('UTC')
 
     df_temperature = pd.read_csv(arguments['file_temperature'], index_col=0, parse_dates=True)
-    df_temperature_serial_number = df_temperature[df_temperature['serialNumber'] == arguments['serial_number']]
     df_target_temperature = pd.read_csv(arguments['file_target_temperature'], index_col=0, parse_dates=True)
     df_valve = pd.read_csv(arguments['file_valve_level'], index_col=0, parse_dates=True)
 
     df_combined = pd.concat([
-        df_temperature_serial_number.rename(columns={'value': 'temperature'}),
+        df_temperature[df_temperature['serialNumber'] == arguments['serial_number']].rename(columns={'value': 'temperature'}),
         df_target_temperature.rename(columns={'value': 'target_temperature'}),
         df_valve.rename(columns={'value': 'valve_level'})
     ])
 
     df_combined_resampled = df_combined.resample(pd.Timedelta(minutes=15)).mean().fillna(method='ffill')
-
     df_combined_resampled = df_combined_resampled.loc[start:stop]
     df_combined_resampled['predicted_temperature'] = 0.0
     df_combined_resampled['predicted_valve_level'] = 0.0
@@ -55,9 +53,7 @@ def main():
     learn_model_valve_baseline(X_train_valve, y_train_valve)
 
     while current < stop:
-        # print('current', current)
-        # print('to calculate:', current + pd.DateOffset(minutes=15))
-        predicted_temperature_baseline, predicted_valve_level_baseline = perform_processing(
+        predicted_temperature, predicted_valve_level = perform_processing(
             df_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_target_temperature.loc[(current - pd.DateOffset(days=7)):current],
             df_valve.loc[(current - pd.DateOffset(days=7)):current],
@@ -65,8 +61,8 @@ def main():
         )
         current = current + pd.DateOffset(minutes=15)
 
-        df_combined_resampled.at[current, 'predicted_temperature'] = predicted_temperature_baseline
-        df_combined_resampled.at[current, 'predicted_valve_level'] = predicted_valve_level_baseline
+        df_combined_resampled.at[current, 'predicted_temperature'] = predicted_temperature
+        df_combined_resampled.at[current, 'predicted_valve_level'] = predicted_valve_level
 
     df_combined_resampled.to_csv(results_file)
 
