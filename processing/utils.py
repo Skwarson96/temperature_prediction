@@ -5,10 +5,7 @@ import pickle
 from pathlib import Path
 from typing import Tuple
 from sklearn import ensemble
-
 from processing.learn_model import rename
-
-
 
 
 def show_plot(df):
@@ -41,16 +38,14 @@ def perform_processing(
     df_combined = pd.concat([temperature, target_temperature, valve_level])
     df_combined = df_combined.drop(columns=['serialNumber'])
 
-
     df_combined = df_combined.resample(pd.Timedelta(minutes=15), label='right').mean().fillna(method='ffill')
 
     # show_plot(df_combined)
 
-
-    with Path('data/reg_temp_baseline.p').open('rb') as classifier_file:
+    with Path('models/reg_temp_baseline.p').open('rb') as classifier_file:
         reg_rf_temp_baseline = pickle.load(classifier_file)
 
-    with Path('data/reg_valve_baseline.p').open('rb') as classifier_file:
+    with Path('models/reg_valve_baseline.p').open('rb') as classifier_file:
         reg_rf_valve_baseline = pickle.load(classifier_file)
 
 
